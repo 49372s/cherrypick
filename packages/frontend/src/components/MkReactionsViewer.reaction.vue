@@ -34,7 +34,8 @@ import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
 import * as sound from '@/scripts/sound.js';
 import { checkReactionPermissions } from '@/scripts/check-reaction-permissions.js';
-import { customEmojis } from '@/custom-emojis.js';
+import { customEmojis, customEmojisMap } from '@/custom-emojis.js';
+import { getUnicodeEmoji } from '@/scripts/emojilist.js';
 import copyToClipboard from '@/scripts/copy-to-clipboard.js';
 
 const props = defineProps<{
@@ -52,13 +53,11 @@ const emit = defineEmits<{
 
 const buttonEl = shallowRef<HTMLElement>();
 
-const isCustomEmoji = computed(() => props.reaction.includes(':'));
-const emoji = computed(() => isCustomEmoji.value ? customEmojis.value.find(emoji => emoji.name === props.reaction.replace(/:/g, '').replace(/@\./, '')) : null);
+const emojiName = computed(() => props.reaction.replace(/:/g, '').replace(/@\./, ''));
+const emoji = computed(() => customEmojisMap.get(emojiName.value) ?? getUnicodeEmoji(props.reaction));
 
 const canToggle = computed(() => {
-	return !props.reaction.match(/@\w/) && $i
-			&& (emoji.value && checkReactionPermissions($i, props.note, emoji.value))
-			|| !isCustomEmoji.value;
+	return !props.reaction.match(/@\w/) && $i && emoji.value && checkReactionPermissions($i, props.note, emoji.value);
 });
 const canGetInfo = computed(() => !props.reaction.match(/@\w/) && props.reaction.includes(':'));
 
@@ -121,35 +120,35 @@ async function toggleReaction(ev: MouseEvent) {
 }
 
 function stealReaction(ev: MouseEvent) {
-	if (props.note.user.host && $i && ($i.isAdmin ?? $i.policies.canManageCustomEmojis)) {
-		os.popupMenu([{
-			type: 'label',
-			text: props.reaction,
-		}, {
-			text: i18n.ts.import,
-			icon: 'ti ti-plus',
-			action: async () => {
-				await os.apiWithDialog('admin/emoji/steal', {
-					name: reactionName.value,
-					host: props.note.user.host,
-				});
-			},
-		}, {
-			text: `${i18n.ts.doReaction} (${i18n.ts.import})`,
-			icon: 'ti ti-mood-plus',
-			action: async () => {
-				await os.apiWithDialog('admin/emoji/steal', {
-					name: reactionName.value,
-					host: props.note.user.host,
-				});
+	if (!props.note.user.host && $i && !($i.isAdmin ?? $i.policies.canManageCustomEmojis)) return;
 
-				await misskeyApi('notes/reactions/create', {
-					noteId: props.note.id,
-					reaction: `:${reactionName.value}:`,
-				});
-			},
-		}], ev.currentTarget ?? ev.target);
-	}
+	os.popupMenu([{
+		type: 'label',
+		text: props.reaction,
+	}, {
+		text: i18n.ts.import,
+		icon: 'ti ti-plus',
+		action: async () => {
+			await os.apiWithDialog('admin/emoji/steal', {
+				name: reactionName.value,
+				host: props.note.user.host,
+			});
+		},
+	}, {
+		text: `${i18n.ts.doReaction} (${i18n.ts.import})`,
+		icon: 'ti ti-mood-plus',
+		action: async () => {
+			await os.apiWithDialog('admin/emoji/steal', {
+				name: reactionName.value,
+				host: props.note.user.host,
+			});
+
+			await misskeyApi('notes/reactions/create', {
+				noteId: props.note.id,
+				reaction: `:${reactionName.value}:`,
+			});
+		},
+	}], ev.currentTarget ?? ev.target);
 }
 
 async function menu(ev) {

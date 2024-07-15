@@ -35,7 +35,7 @@ const routes: RouteDef[] = [{
 	component: page(() => import('@/pages/user/index.vue')),
 }, {
 	name: 'note',
-	path: '/notes/:noteId',
+	path: '/notes/:noteId/:initialTab?',
 	component: page(() => import('@/pages/note.vue')),
 }, {
 	name: 'list',
@@ -206,9 +206,15 @@ const routes: RouteDef[] = [{
 	path: '/announcements',
 	component: page(() => import('@/pages/announcements.vue')),
 }, {
+	path: '/announcements/:announcementId',
+	component: page(() => import('@/pages/announcement.vue')),
+}, {
 	path: '/about',
 	component: page(() => import('@/pages/about.vue')),
 	hash: 'initialTab',
+}, {
+	path: '/contact',
+	component: page(() => import('@/pages/contact.vue')),
 }, {
 	path: '/about-misskey',
 	component: page(() => import('@/pages/about-misskey.vue')),
@@ -360,6 +366,7 @@ const routes: RouteDef[] = [{
 	component: iAmModerator ? page(() => import('@/pages/admin-file.vue')) : page(() => import('@/pages/not-found.vue')),
 }, {
 	path: '/admin',
+	name: 'admin',
 	component: iAmModerator ? page(() => import('@/pages/admin/index.vue')) : page(() => import('@/pages/not-found.vue')),
 	children: [{
 		path: '/overview',
@@ -477,6 +484,14 @@ const routes: RouteDef[] = [{
 		path: '/invites',
 		name: 'invites',
 		component: page(() => import('@/pages/admin/invites.vue')),
+	}, {
+		path: '/abuse-report-notification-recipient',
+		name: 'abuse-report-notification-recipient',
+		component: page(() => import('@/pages/admin/abuse-report/notification-recipient.vue')),
+	}, {
+		path: '/system-webhook',
+		name: 'system-webhook',
+		component: page(() => import('@/pages/admin/system-webhook.vue')),
 	}, {
 		path: '/update',
 		name: 'update',
